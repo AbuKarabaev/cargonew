@@ -87,6 +87,7 @@ def get_phone(message):
         f"Если произошла какая-либо ошибка или проблема,\n"
         f" вы можете написать нам в WhatsApp.\n"
         f"WhatsApp:+996 550 686 961\n"
+        f"Ссылка: https://t.me/+N1Xktz9wb55jZjRi\n"
         f"Ваш уникальный код: {user_code}"
     )
     bot.send_message(message.chat.id, address_message1)
