@@ -1,6 +1,5 @@
 import telebot
 from telebot import types
-import uuid
 import sqlite3
 import re
 from datetime import datetime
@@ -83,27 +82,22 @@ def get_phone(message):
                    (message.chat.id, user_data[message.chat.id]['name'], user_data[message.chat.id]['phone'], user_code, user_data[message.chat.id]['registration_date']))
     conn.commit()
 
-    # Отправка данных в администраторский бот через API
-    try:
-        requests.post(f"https://api.telegram.org/bot{ADMIN_BOT_API_TOKEN}/sendMessage", data={
-            "chat_id": ADMIN_BOT_CHAT_ID,
-            "text": f"Новый пользователь зарегистрировался:\n"
-                    f"Имя: {user_data[message.chat.id]['name']}\n"
-                    f"Телефон: {user_data[message.chat.id]['phone']}\n"
-                    f"Код: {user_code}"
-        })
-    except Exception as e:
-        log_event(f"Ошибка отправки данных в админ-бот через API: {e}")
+    # Отправка сообщений
+    address_message1 = (
+        f"Ваш адрес для доставки:\n"
+        f"广东省佛山市南海区里水镇环镇南路33号1号仓315库B6961\n"
+        f"收货人 梅先生-B6961\n"
+        f"Телефон: 13250150777\n"
+        f"Ссылка: https://t.me/+N1Xktz9wb55jZjRi\n"
+        f"Ваш уникальный код: {user_code}"
+    )
+    bot.send_message(message.chat.id, address_message1)
 
-    # Отправка сообщения пользователю
-    address_message = (f"Ваш адрес для доставки:\n"
-                       f"广东省佛山市南海区里水镇环镇南路33号1号仓315库B6961\n"
-                       f"收货人 梅先生-B6961\n"
-                       f"Телефон: 13250150777\n"
-                       f"Ссылка: https://t.me/+N1Xktz9wb55jZjRi\n"
-                       f"Ваш уникальный код: {user_code}")
-
-    bot.send_message(message.chat.id, address_message)
+    address_message2 = (
+        f"广东省佛山市南海区里水镇环镇南路33号1号仓315库B6961\n"
+        f"收货人 梅先生-B6961\n"
+    )
+    bot.send_message(message.chat.id, address_message2)
 
     # Отправка двух видео
     video_paths = ['instruction.mp4', 'instructions.mp4']
@@ -129,8 +123,7 @@ def cancel(message):
 @bot.message_handler(func=lambda message: message.text.strip().lower() == 'запрещённые товары')
 def restricted_goods(message):
     try:
-        # Открытие PDF-файла с запрещёнными товарами
-        file_path = "zpr.pdf"  # Укажите точное имя и путь файла
+        file_path = "zpr.pdf"
         with open(file_path, 'rb') as file:
             bot.send_document(message.chat.id, file)
         log_event(f"User {message.chat.id} requested restricted goods list.")
