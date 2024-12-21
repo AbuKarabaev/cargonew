@@ -84,11 +84,9 @@ def get_phone(message):
 
     # Отправка сообщений
     address_message1 = (
-        f"Ваш адрес для доставки:\n"
-        f"广东省佛山市南海区里水镇环镇南路33号1号仓315库B6961\n"
-        f"收货人 梅先生-B6961\n"
-        f"Телефон: 13250150777\n"
-        f"Ссылка: https://t.me/+N1Xktz9wb55jZjRi\n"
+        f"Если произошла какая-либо ошибка или проблема,\n"
+        f" вы можете написать нам в WhatsApp.\n"
+        f"WhatsApp:+996 550 686 961\n"
         f"Ваш уникальный код: {user_code}"
     )
     bot.send_message(message.chat.id, address_message1)
@@ -96,6 +94,7 @@ def get_phone(message):
     address_message2 = (
         f"广东省佛山市南海区里水镇环镇南路33号1号仓315库B6961\n"
         f"收货人 梅先生-B6961\n"
+        f"13250150777\n"
     )
     bot.send_message(message.chat.id, address_message2)
 
