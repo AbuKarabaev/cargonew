@@ -34,6 +34,7 @@ def log_event(event):
 # Функция для отправки уведомлений администратору
 def send_admin_notification(user_data):
     try:
+        print("Отправка данных администратору:", user_data)  # Отладочное сообщение
         admin_message = (
             f"Новый пользователь зарегистрирован:\n"
             f"Имя: {user_data['name']}\n"
@@ -46,7 +47,8 @@ def send_admin_notification(user_data):
             'chat_id': ADMIN_BOT_CHAT_ID,
             'text': admin_message
         }
-        requests.post(admin_bot_url, data=payload)
+        response = requests.post(admin_bot_url, data=payload)
+        print("Ответ сервера администратора:", response.text)  # Проверка ответа сервера
     except Exception as e:
         log_event(f"Ошибка отправки уведомления администратору: {e}")
 
@@ -74,6 +76,7 @@ def get_name(message):
         cancel(message)
         return
     user_data[message.chat.id]['name'] = message.text
+    print("Текущее состояние user_data:", user_data)  # Отладка
     bot.send_message(message.chat.id, 'Введите ваш номер телефона (только цифры):')
     bot.register_next_step_handler(message, get_phone)
 

@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "southcargoobot",
+  "private_key_id": "6e474d8767b4e7763adf155169a4c80b88e7ff86",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC+DvqIgnZpZGN2\nKka7OfeQzTs7ZQZSCDq2bYZk1nWeiTyjyJJsZRRqbsbjdMI0GXjv8gIOAPhPj7LX\n2PAV5wj1wqR1DkuQ5Gt5mdnLZm5XdVQzCgo3L1S+OI4syGX8SEwEh7OEKMd9Jf02\nBIkiFKmOAtDMp0zc8xIIRKCDq9tvGiWe2Qd+HNEvS4Y07HZciTakqYbj18/vjezh\nh1AubaksnLHXHEaZyF2GJRe9CZg9Z2Lel4duWSpzum57XQgtSY8B0I98vHZqyGPy\nZvMr6WrYzbiiAHO3ndcoAeI8jUzAveGgNeEW/9I0W+CE5o1/fvFy7P8Iw4rHxnMs\nPlPfMWNlAgMBAAECggEABaop9XT4qojUyL+B1DAUx5AWZTLMTsLysl/uqDAW2V7Q\ncTaX2/s3RzoosLwuKEy0uhIbKuevKaU9eLQn6RSLGSgarBJ9AMM4y4BhFBroIbCG\n40PirLplwDWspyZh7nRehP62bwiiyYF0W+55V+FdxwnLx2Mae2C994PJdPiOVcVY\nk4U/xHfi9TpT03b4Fjp/fqBYYHIIS3AzsLV+oNKrz3lkcbdSBpB5Xh1eWhUwKCjs\nYcAwwBD6RKJ6Q5bdvbWVmr5eiDDUDBKaMizWWmgiRQHUmAp2VQQHxj9Q1uEEKgiG\nXDPHmaAtx7+FA9/ybDPrBNnJbS5mixW5p9d8Fwm/gQKBgQDlpDXSyCaZ2/b4BSWo\nuha9Nd3cr0hRbsXph9fGQvkeDoA9fMFt3nUbUP2NVsYaz58p9IvvWSJQ3y6IOSUf\n71ylVJbHf3cKbMU2X53mt2PJABgk7IlxKPDyCwPXYmnk9lmV902zMqaKuWznaAD2\nSlLwZveaVQ8hKYhpXz4UoNFJDQKBgQDT36mXCpVO8dRUdgHAMnJsWriS3Fk5/EKf\nc730YnXbvjGb9kHkXgim3tJhDpo4DbTBNq7Tow4A3HF7kZQsJFOT1ZhTRjkomQM6\n7UE0C9+2JFw/aWZyovxMyZV9i8jWs+8qXPZcA9TmrnzD5TO/50ddvCtwuEVPvHAX\nv+ui3dm9uQKBgQCxhBfLQcd9JmmqXig3XuqXBx3jK2hG8s9w7/6fl0QFtQXzAg5w\nhQeXvyrRaGOpdBfAkfbeZdO+GlhZG3uUTS8b6uDHhMQbvetRVea048zyIu2HFYZF\ngHWJVXR5uezL/pdP8yUQQjY1hJMn6uDbgqbMiXwbxGb2pql5cxOFVK+TvQKBgBmn\n++FOZsYogo23vH6JnVGBqtgd1rAu2+JzIY12Xs89OMSqDVCaEnIiiVc3bXVcM4cy\nF/mIxSlViGhuOIMf4v8D3m43ErTX0oxQLpUe2vgzbvg+yykWk3a48mFBjBBzuYJn\nv21lCWLlvjX6i0mxt/Kh1qDPr5T4PJqjouUV+EgBAoGAMb3bGfSLw7E3HqfJz071\ndEvelIAn/+b+bxIIgfD4mNdyM6fXxsi+iSOSpGgcL4/miReXZmKzjPL94E209hiO\nTns05+7Cr6WffApmpgSXJg2Bjo8xFtfXEtGNSIA+KxWabkMfkZhZQm3fvV8vk/Jm\nHsD2VBQFfgrxkJlbvEbcNnw=\n-----END PRIVATE KEY-----\n",
+  "client_email": "southcargoobot@southcargoobot.iam.gserviceaccount.com",
+  "client_id": "109142632806923190476",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/southcargoobot%40southcargoobot.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
