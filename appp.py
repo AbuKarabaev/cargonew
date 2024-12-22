@@ -31,10 +31,10 @@ def log_event(event):
     with open('bot_logs.txt', 'a') as log_file:
         log_file.write(f"{datetime.now()} - {event}\n")
 
-# Функция для отправки уведомлений администратору
+
 def send_admin_notification(user_data):
     try:
-        print("Отправка данных администратору:", user_data)  # Отладочное сообщение
+        print("Отправка данных администратору:", user_data)  
         admin_message = (
             f"Новый пользователь зарегистрирован:\n"
             f"Имя: {user_data['name']}\n"
