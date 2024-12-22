@@ -7,7 +7,7 @@ import requests
 
 API_TOKEN = '7216690383:AAGPtNiQ_F2Bsa1rdC_sVT8lhic7ghjS6Fo'
 ADMIN_BOT_API_TOKEN = '8126103952:AAGSX9IZcjAoHI1VVLgmztUGrfv_QJMIBvk'
-ADMIN_BOT_CHAT_ID = '6903472998'
+ADMIN_BOT_CHAT_ID = '5338389700'
 
 bot = telebot.TeleBot(API_TOKEN)
 
@@ -30,6 +30,25 @@ user_data = {}
 def log_event(event):
     with open('bot_logs.txt', 'a') as log_file:
         log_file.write(f"{datetime.now()} - {event}\n")
+
+# Функция для отправки уведомлений администратору
+def send_admin_notification(user_data):
+    try:
+        admin_message = (
+            f"Новый пользователь зарегистрирован:\n"
+            f"Имя: {user_data['name']}\n"
+            f"Телефон: {user_data['phone']}\n"
+            f"Код: {user_data['code']}\n"
+            f"Дата регистрации: {user_data['registration_date']}"
+        )
+        admin_bot_url = f"https://api.telegram.org/bot{ADMIN_BOT_API_TOKEN}/sendMessage"
+        payload = {
+            'chat_id': ADMIN_BOT_CHAT_ID,
+            'text': admin_message
+        }
+        requests.post(admin_bot_url, data=payload)
+    except Exception as e:
+        log_event(f"Ошибка отправки уведомления администратору: {e}")
 
 @bot.message_handler(commands=['start', 'help'])
 def start(message):
@@ -82,6 +101,9 @@ def get_phone(message):
                    (message.chat.id, user_data[message.chat.id]['name'], user_data[message.chat.id]['phone'], user_code, user_data[message.chat.id]['registration_date']))
     conn.commit()
 
+    # Уведомление администратора
+    send_admin_notification(user_data[message.chat.id])
+
     # Отправка сообщений
     address_message1 = (
         f"Если произошла какая-либо ошибка или проблема,\n"
@@ -123,7 +145,7 @@ def cancel(message):
 @bot.message_handler(func=lambda message: message.text.strip().lower() == 'запрещённые товары')
 def restricted_goods(message):
     try:
-        file_path = "zpr.pdf"
+        file_path = "Prohibited products.pdf"
         with open(file_path, 'rb') as file:
             bot.send_document(message.chat.id, file)
         log_event(f"User {message.chat.id} requested restricted goods list.")
