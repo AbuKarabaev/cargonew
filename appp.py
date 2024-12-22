@@ -85,7 +85,7 @@ def get_phone(message):
         cancel(message)
         return
     phone_number = message.text
-    if not re.match(r'^\d{10,15}$', phone_number):
+    if not re.match(r'\d{10,15}$', phone_number):
         bot.send_message(message.chat.id, 'Неверный формат телефона. Попробуйте снова.')
         bot.register_next_step_handler(message, get_phone)
         return
