@@ -72,8 +72,8 @@ def send_welcome(message):
 # Главное меню
 def send_main_menu(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add('Отслеживание товаров', 'Аккаунт')
-    markup.add('Адрес в Кыргызстане', 'Канал', 'Запрещённые товары')
+    markup.add('Аккаунт','Запрещённые товары')
+    markup.add('Адрес в Кыргызстане', 'Канал')
     bot.send_message(message.chat.id, "Выберите нужный раздел:", reply_markup=markup)
 
 # Проверка пользователя
@@ -144,7 +144,7 @@ def complete_registration(message):
 
         cursor.execute('SELECT COUNT(*) FROM users')
         user_count = cursor.fetchone()[0]
-        START_CODE = 1533
+        START_CODE = 2100
         user_code = f"A{START_CODE + user_count}"
         registration_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
