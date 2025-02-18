@@ -144,7 +144,7 @@ def complete_registration(message):
 
         cursor.execute('SELECT COUNT(*) FROM users')
         user_count = cursor.fetchone()[0]
-        START_CODE = 2100
+        START_CODE = 3000
         user_code = f"A{START_CODE + user_count}"
         registration_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
@@ -157,6 +157,7 @@ def complete_registration(message):
 
         send_admin_notification(user_data[user_id])
         bot.send_message(message.chat.id, f"Ваш уникальный код: {user_code}")
+
 
         address_message = (
             "Адрес склада в Китае:\n"
