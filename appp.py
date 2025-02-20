@@ -150,7 +150,7 @@ def complete_registration(message):
             "📦 *Адрес склада в Китае:*\n"
             "广东省佛山市南海区里水镇环镇南路33号1号仓315库B6961\n"
             "收货人 梅先生-B6961\n"
-            "📞 13250150777"
+            "13250150777"
         )
         bot.send_message(message.chat.id, address_message, parse_mode="Markdown")
 
