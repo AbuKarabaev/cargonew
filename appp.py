@@ -3,10 +3,13 @@ from telebot import types
 import sqlite3
 import re
 from datetime import datetime
+import requests
 
-API_TOKEN = '7216690383:AAGPtNiQ_F2Bsa1rdC_sVT8lhic7ghjS6Fo'
+
+API_TOKEN = '8168304863:AAE2pTAg5_Cs_wHMy-GUKKyyddT1Ia_wbbE'
 ADMIN_BOT_API_TOKEN = '8191961162:AAGo_BkBhLTY7VbgMJ5DTeih5wBBq_l71mE'
 ADMIN_BOT_CHAT_ID = '5338389700'
+API_URL = "https://south-cargo-osh.prolabagency.com/api/v1/clients/"
 
 bot = telebot.TeleBot(API_TOKEN)
 admin_bot = telebot.TeleBot(ADMIN_BOT_API_TOKEN)
@@ -54,9 +57,43 @@ def send_welcome(message):
     else:
         send_main_menu(message)
 
+def send_data_to_api(user_data):
+    try:
+        response = requests.post(API_URL, json=user_data)
+        if response.status_code == 200:
+            log_event("Данные успешно отправлены на сайт")
+        else:
+            log_event(f"Ошибка отправки данных на сайт: {response.status_code} - {response.text}")
+    except Exception as e:
+        log_event(f"Ошибка соединения с API сайта: {e}")
+
+
+    test_data = {
+                f"Имя: {user_data['name']}\n"
+                f"Телефон: {user_data['phone']}\n"
+                f"Код: {user_data['code']}\n"
+                f"Дата регистрации: {user_data['registration_date']}"
+    }
+
+    response = requests.post(API_URL, json=test_data)
+    print(response.status_code, response.text)
+
+def send_data_to_api(user_data):
+    try:
+        headers = {"Content-Type": "application/json"}
+        response = requests.post(API_URL, json=user_data, headers=headers)
+        
+        if response.status_code == 200:
+            log_event("✅ Данные успешно отправлены на сайт")
+        else:
+            log_event(f"⚠ Ошибка отправки данных: {response.status_code} - {response.text}")
+    except Exception as e:
+        log_event(f"❌ Ошибка соединения с API сайта: {e}")
+
+
 def send_main_menu(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add('Аккаунт', 'Запрещённые товары', 'Адрес в Кыргызстане', 'Канал', 'Отслеживание товаров')
+    markup.add('Аккаунт', 'Запрещённые товары','Канал',)
     bot.send_message(message.chat.id, "Выберите нужный раздел:", reply_markup=markup)
 
 def get_user(user_id):
@@ -169,6 +206,56 @@ def complete_registration(message):
         log_event(f"Ошибка при регистрации пользователя: {e}")
     except Exception as e:
         log_event(f"Неизвестная ошибка при регистрации пользователя: {e}")
+
+@bot.message_handler(func=lambda message: message.text == 'Аккаунт')
+def account_info(message):
+    try:
+        user = get_user(message.chat.id)
+        if user:
+            bot.send_message(
+                message.chat.id,
+                f"Ваш аккаунт:\n"
+                f"Имя: {user['name']}\n"
+                f"Телефон: {user['phone']}\n"
+                f"Код: {user['code']}\n"
+                f"Дата регистрации: {user['registration_date']}"
+            )
+        else:
+            bot.send_message(message.chat.id, "Вы не зарегистрированы. Пожалуйста, зарегистрируйтесь.")
+    except Exception as e:
+        log_event(f"Ошибка при получении информации об аккаунте: {e}")
+
+# Обработка кнопки "Канал"
+@bot.message_handler(func=lambda message: message.text == 'Канал')
+def send_channel_links(message):
+    try:
+        bot.send_message(
+            message.chat.id,
+            "Ссылки на наши каналы:\n"
+            "1. [Telegram канал](https://t.me/+N1Xktz9wb55jZjRi)\n"
+            "2. [Отзывы](https://web.telegram.org/k/#-2069386995)\n\n"
+            "Для связи: [Личка](https://t.me/Seocargo)",
+            "Для связи: [Личка](https://wa.me/message/ADWEXABNRF74I1)",
+            parse_mode="Markdown"
+        )
+    except Exception as e:
+        log_event(f"Ошибка при отправке ссылок на каналы: {e}")
+
+
+# Обработка кнопки "Запрещённые товары"
+@bot.message_handler(func=lambda message: message.text == 'Запрещённые товары')
+def send_prohibited_items(message):
+    try:
+        image_paths = [f"{i}.png" for i in range(1, 11)]
+        for path in image_paths:
+            try:
+                with open(path, 'rb') as image:
+                    bot.send_photo(message.chat.id, image)
+            except FileNotFoundError:
+                bot.send_message(message.chat.id, f"Картинка {path} временно недоступна.")
+    except Exception as e:
+        log_event(f"Ошибка при отправке запрещённых товаров: {e}")
+
 
 if __name__ == '__main__':
     try:
