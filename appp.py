@@ -6,7 +6,7 @@ from datetime import datetime
 import requests
 
 
-API_TOKEN = '8168304863:AAE2pTAg5_Cs_wHMy-GUKKyyddT1Ia_wbbE'
+API_TOKEN = '7216690383:AAGPtNiQ_F2Bsa1rdC_sVT8lhic7ghjS6Fo'
 ADMIN_BOT_API_TOKEN = '8191961162:AAGo_BkBhLTY7VbgMJ5DTeih5wBBq_l71mE'
 ADMIN_BOT_CHAT_ID = '5338389700'
 API_URL = "https://south-cargo-osh.prolabagency.com/api/v1/clients/"
