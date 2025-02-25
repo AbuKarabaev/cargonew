@@ -6,7 +6,7 @@ import requests
 import json
 from datetime import datetime
 
-API_TOKEN = '7777623993:AAHHvxraIzMj9THh8g4Pc_sLWffJCiT2lB0'
+API_TOKEN = '7216690383:AAGPtNiQ_F2Bsa1rdC_sVT8lhic7ghjS6Fo'
 ADMIN_BOT_API_TOKEN = '8191961162:AAGo_BkBhLTY7VbgMJ5DTeih5wBBq_l71mE'
 ADMIN_BOT_CHAT_ID = '5338389700'
 API_URL = "https://south-cargo-osh.prolabagency.com/api/v1/clients/"
@@ -14,7 +14,7 @@ API_URL = "https://south-cargo-osh.prolabagency.com/api/v1/clients/"
 bot = telebot.TeleBot(API_TOKEN)
 admin_bot = telebot.TeleBot(ADMIN_BOT_API_TOKEN)
 
-# Подключение к базе данных SQLite
+
 conn = sqlite3.connect('users.db', check_same_thread=False)
 cursor = conn.cursor()
 cursor.execute('''
@@ -34,34 +34,33 @@ user_data = {}
 def log_event(event):
     print(event)  
 
-def send_data_to_api(user_data):
+
+def send_data_to_api(user_id, user_data, bot, chat_id):
     try:
         if not API_URL or not API_URL.startswith("http"):
-            log_event("❌ Ошибка: Неверный API_URL. Проверьте адрес API.")
+            log_event("❌ Ошибка: Неверный API_URL.")
+            bot.send_message(chat_id, "❌ Ошибка сервера. Попробуйте позже.")
             return
 
-        print(user_data)
-        headers = {
-            "Content-Type": "application/json",
-        }
+        headers = {"Content-Type": "application/json"}
         if API_TOKEN:
-            headers["Authorization"] = f"Bearer {API_TOKEN}" 
-
-        log_event(f"📡 Отправка данных на API:\n{json.dumps(user_data, indent=2, ensure_ascii=False)}")
+            headers["Authorization"] = f"Bearer {API_TOKEN}"
 
         response = requests.post(API_URL, json=user_data, headers=headers, timeout=10)
-        response.raise_for_status()
+        
+        if response.status_code == 201:
+            bot.send_message(chat_id, "✅ Регистрация успешна!")
+            return True
+        else:
+            error_message = response.json().get("wa_number", ["❌ Ошибка регистрации."])[0]
+            bot.send_message(chat_id, f"❌ {error_message}")
+            return False
 
-        log_event(f"✅ Данные успешно отправлены! Ответ API: {response.text}")
-
-    except requests.exceptions.HTTPError as http_err:
-        log_event(f"❌ Ошибка HTTP: {http_err}. Ответ API: {response.text}")
-    except requests.exceptions.ConnectionError:
-        log_event("❌ Ошибка соединения с API (возможно, сервер недоступен)")
-    except requests.exceptions.Timeout:
-        log_event("⏳ Ошибка: API долго не отвечает (таймаут)")
     except requests.exceptions.RequestException as e:
-        log_event(f"❌ Ошибка при запросе к API: {e}")
+        bot.send_message(chat_id, "❌ Ошибка связи с сервером. Попробуйте позже.")
+        log_event(f"Ошибка API: {e}")
+ 
+
 
 
 @bot.message_handler(commands=['start'])
@@ -74,7 +73,7 @@ def send_welcome(message):
     else:
         send_main_menu(message)
 
-# Функция получения пользователя из базы данных
+
 def get_user(user_id):
     cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
     return cursor.fetchone()
@@ -147,7 +146,6 @@ def complete_registration(message):
     try:
         user_id = message.chat.id
 
-        # Проверка, есть ли у пользователя данные
         if user_id not in user_data:
             bot.send_message(user_id, "⚠ Ошибка: ваши данные не найдены. Попробуйте зарегистрироваться снова.")
             return
@@ -155,7 +153,6 @@ def complete_registration(message):
         name = user_data[user_id].get('name', 'Не указано')
         phone = user_data[user_id].get('phone', 'Не указан')
 
-        # Проверяем, нет ли пользователя в базе
         cursor.execute('SELECT code FROM users WHERE user_id = ?', (user_id,))
         existing_user = cursor.fetchone()
         if existing_user:
@@ -163,62 +160,53 @@ def complete_registration(message):
             send_main_menu(message)
             return
 
-        # Генерация уникального кода
         cursor.execute('SELECT COUNT(*) FROM users')
         user_count = cursor.fetchone()[0]
         START_CODE = 3000
         user_code = f"A{START_CODE + user_count + 1}"
         registration_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        # Сохранение данных в базу
-        cursor.execute('INSERT INTO users (user_id, name, phone, code, registration_date) VALUES (?, ?, ?, ?, ?)',
-                       (user_id, name, phone, user_code, registration_date))
-        conn.commit()
-
-        # Обновляем локальные данные
         user_data[user_id]['code'] = user_code
         user_data[user_id]['registration_date'] = registration_date
 
-        # Отправляем данные в админ-бот
-        send_admin_notification(user_data[user_id])
+        res = send_data_to_api(user_id, {"id": user_id, "name": name, "code": user_code, "wa_number": phone}, bot, user_id)
 
-        # Отправка данных на API
-        send_data_to_api({
-            "id": user_id,
-            "name": name,
-            "code": user_code,
-            "wa_number": phone  # API требует wa_number вместо phone
-        })
+        if res:
+            cursor.execute('INSERT INTO users (user_id, name, phone, code, registration_date) VALUES (?, ?, ?, ?, ?)',
+                       (user_id, name, phone, user_code, registration_date))
+            conn.commit()
 
-        # Подтверждение регистрации пользователю
-        bot.send_message(user_id, f"✅ *Регистрация завершена!*\n\n"
-                                  f"📌 *Ваши данные:*\n"
-                                  f"🔹 *Имя:* {name}\n"
-                                  f"📞 *Телефон:* {phone}\n"
-                                  f"🆔 *Уникальный код:* {user_code}\n"
-                                  f"📅 *Дата регистрации:* {registration_date}",
-                         parse_mode="Markdown")
+            send_admin_notification(user_data[user_id])
 
-        # Отправка адреса склада
-        address_message = (
-            "📦 *Адрес склада в Китае:*\n"
-            "广东省佛山市南海区里水镇环镇南路33号1号仓315库B6961\n"
-            "收货人 梅先生-B6961\n"
-            "13250150777"
-        )
-        bot.send_message(user_id, address_message, parse_mode="Markdown")
+        
 
-        # Отправка видео-инструкций
-        video_paths = ['instruction.mp4', 'instructions.mp4']
-        for path in video_paths:
-            try:
-                with open(path, 'rb') as video:
-                    bot.send_video(user_id, video)
-            except FileNotFoundError:
-                bot.send_message(user_id, f"⚠ Видео {path} временно недоступно.")
+            bot.send_message(user_id, f"✅ *Регистрация завершена!*\n\n"
+                                    f"📌 *Ваши данные:*\n"
+                                    f"🔹 *Имя:* {name}\n"
+                                    f"📞 *Телефон:* {phone}\n"
+                                    f"🆔 *Уникальный код:* {user_code}\n"
+                                    f"📅 *Дата регистрации:* {registration_date}",
+                            parse_mode="Markdown")
 
-        bot.send_message(user_id, "🎉 Теперь вы можете пользоваться нашим сервисом!")
-        send_main_menu(message)
+            address_message = (
+                "📦 *Адрес склада в Китае:*\n"
+                "广东省佛山市南海区里水镇环镇南路33号1号仓315库B6961\n"
+                "收货人 梅先生-B6961\n"
+                "13250150777"
+            )
+            bot.send_message(user_id, address_message, parse_mode="Markdown")
+
+            # Отправка видео-инструкций
+            video_paths = ['instruction.mp4', 'instructions.mp4']
+            for path in video_paths:
+                try:
+                    with open(path, 'rb') as video:
+                        bot.send_video(user_id, video)
+                except FileNotFoundError:
+                    bot.send_message(user_id, f"⚠ Видео {path} временно недоступно.")
+
+            bot.send_message(user_id, "🎉 Теперь вы можете пользоваться нашим сервисом!")
+            send_main_menu(message)
 
     except sqlite3.Error as db_error:
         bot.send_message(user_id, "❌ Ошибка базы данных. Попробуйте позже.")
@@ -261,7 +249,7 @@ def account_info(message):
     except Exception as e:
         log_event(f"Ошибка при получении информации об аккаунте: {e}")
 
-# Обработка кнопки "Канал"
+
 @bot.message_handler(func=lambda message: message.text == 'Канал')
 def send_channel_links(message):
     try:
@@ -278,7 +266,6 @@ def send_channel_links(message):
         log_event(f"Ошибка при отправке ссылок на каналы: {e}")
 
 
-# Обработка кнопки "Запрещённые товары"
 @bot.message_handler(func=lambda message: message.text == 'Запрещённые товары')
 def send_prohibited_items(message):
     try:
