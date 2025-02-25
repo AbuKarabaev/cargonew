@@ -1,12 +1,12 @@
+import re
 import telebot
 from telebot import types
 import sqlite3
-import re
-from datetime import datetime
 import requests
+import json
+from datetime import datetime
 
-
-API_TOKEN = '7216690383:AAGPtNiQ_F2Bsa1rdC_sVT8lhic7ghjS6Fo'
+API_TOKEN = '7777623993:AAHHvxraIzMj9THh8g4Pc_sLWffJCiT2lB0'
 ADMIN_BOT_API_TOKEN = '8191961162:AAGo_BkBhLTY7VbgMJ5DTeih5wBBq_l71mE'
 ADMIN_BOT_CHAT_ID = '5338389700'
 API_URL = "https://south-cargo-osh.prolabagency.com/api/v1/clients/"
@@ -14,6 +14,7 @@ API_URL = "https://south-cargo-osh.prolabagency.com/api/v1/clients/"
 bot = telebot.TeleBot(API_TOKEN)
 admin_bot = telebot.TeleBot(ADMIN_BOT_API_TOKEN)
 
+# Подключение к базе данных SQLite
 conn = sqlite3.connect('users.db', check_same_thread=False)
 cursor = conn.cursor()
 cursor.execute('''
@@ -31,21 +32,37 @@ conn.commit()
 user_data = {}
 
 def log_event(event):
-    with open('bot_logs.txt', 'a', encoding='utf-8') as log_file:
-        log_file.write(f"{datetime.now()} - {event}\n")
+    print(event)  
 
-def send_admin_notification(user_data):
+def send_data_to_api(user_data):
     try:
-        admin_message = (
-            f"Новый пользователь зарегистрирован:\n"
-            f"Имя: {user_data['name']}\n"
-            f"Телефон: {user_data['phone']}\n"
-            f"Код: {user_data['code']}\n"
-            f"Дата регистрации: {user_data['registration_date']}"
-        )
-        admin_bot.send_message(ADMIN_BOT_CHAT_ID, admin_message)
-    except Exception as e:
-        log_event(f"Ошибка отправки уведомления администратору: {e}")
+        if not API_URL or not API_URL.startswith("http"):
+            log_event("❌ Ошибка: Неверный API_URL. Проверьте адрес API.")
+            return
+
+        print(user_data)
+        headers = {
+            "Content-Type": "application/json",
+        }
+        if API_TOKEN:
+            headers["Authorization"] = f"Bearer {API_TOKEN}" 
+
+        log_event(f"📡 Отправка данных на API:\n{json.dumps(user_data, indent=2, ensure_ascii=False)}")
+
+        response = requests.post(API_URL, json=user_data, headers=headers, timeout=10)
+        response.raise_for_status()
+
+        log_event(f"✅ Данные успешно отправлены! Ответ API: {response.text}")
+
+    except requests.exceptions.HTTPError as http_err:
+        log_event(f"❌ Ошибка HTTP: {http_err}. Ответ API: {response.text}")
+    except requests.exceptions.ConnectionError:
+        log_event("❌ Ошибка соединения с API (возможно, сервер недоступен)")
+    except requests.exceptions.Timeout:
+        log_event("⏳ Ошибка: API долго не отвечает (таймаут)")
+    except requests.exceptions.RequestException as e:
+        log_event(f"❌ Ошибка при запросе к API: {e}")
+
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -53,42 +70,14 @@ def send_welcome(message):
     if not user:
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add('Регистрация')
-        bot.send_message(message.chat.id, "Добро пожаловать! Зарегистрируйтесь, чтобы продолжить.", reply_markup=markup)
+        bot.send_message(message.chat.id, "👋 Добро пожаловать! Пожалуйста, зарегистрируйтесь, чтобы продолжить.", reply_markup=markup)
     else:
         send_main_menu(message)
 
-def send_data_to_api(user_data):
-    try:
-        response = requests.post(API_URL, json=user_data)
-        if response.status_code == 200:
-            log_event("Данные успешно отправлены на сайт")
-        else:
-            log_event(f"Ошибка отправки данных на сайт: {response.status_code} - {response.text}")
-    except Exception as e:
-        log_event(f"Ошибка соединения с API сайта: {e}")
-
-
-    test_data = {
-                f"Имя: {user_data['name']}\n"
-                f"Телефон: {user_data['phone']}\n"
-                f"Код: {user_data['code']}\n"
-                f"Дата регистрации: {user_data['registration_date']}"
-    }
-
-    response = requests.post(API_URL, json=test_data)
-    print(response.status_code, response.text)
-
-def send_data_to_api(user_data):
-    try:
-        headers = {"Content-Type": "application/json"}
-        response = requests.post(API_URL, json=user_data, headers=headers)
-        
-        if response.status_code == 200:
-            log_event("✅ Данные успешно отправлены на сайт")
-        else:
-            log_event(f"⚠ Ошибка отправки данных: {response.status_code} - {response.text}")
-    except Exception as e:
-        log_event(f"❌ Ошибка соединения с API сайта: {e}")
+# Функция получения пользователя из базы данных
+def get_user(user_id):
+    cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
+    return cursor.fetchone()
 
 
 def send_main_menu(message):
@@ -153,59 +142,106 @@ def process_phone_step(message):
     except Exception as e:
         log_event(f"Ошибка на этапе ввода телефона: {e}")
 
+
 def complete_registration(message):
     try:
         user_id = message.chat.id
-        name = user_data[user_id]['name']
-        phone = user_data[user_id]['phone']
 
+        # Проверка, есть ли у пользователя данные
+        if user_id not in user_data:
+            bot.send_message(user_id, "⚠ Ошибка: ваши данные не найдены. Попробуйте зарегистрироваться снова.")
+            return
+
+        name = user_data[user_id].get('name', 'Не указано')
+        phone = user_data[user_id].get('phone', 'Не указан')
+
+        # Проверяем, нет ли пользователя в базе
+        cursor.execute('SELECT code FROM users WHERE user_id = ?', (user_id,))
+        existing_user = cursor.fetchone()
+        if existing_user:
+            bot.send_message(user_id, "✅ Вы уже зарегистрированы!")
+            send_main_menu(message)
+            return
+
+        # Генерация уникального кода
         cursor.execute('SELECT COUNT(*) FROM users')
         user_count = cursor.fetchone()[0]
         START_CODE = 3000
-        user_code = f"A{START_CODE + user_count}"
+        user_code = f"A{START_CODE + user_count + 1}"
         registration_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
+        # Сохранение данных в базу
         cursor.execute('INSERT INTO users (user_id, name, phone, code, registration_date) VALUES (?, ?, ?, ?, ?)',
                        (user_id, name, phone, user_code, registration_date))
         conn.commit()
 
+        # Обновляем локальные данные
         user_data[user_id]['code'] = user_code
         user_data[user_id]['registration_date'] = registration_date
 
+        # Отправляем данные в админ-бот
         send_admin_notification(user_data[user_id])
 
-        # Отправка пользователю всех регистрационных данных
-        bot.send_message(message.chat.id, f"✅ *Регистрация завершена!*\n\n"
-                                          f"📌 *Ваши данные:*\n"
-                                          f"🔹 *Имя:* {name}\n"
-                                          f"📞 *Телефон:* {phone}\n"
-                                          f"🆔 *Уникальный код:* {user_code}\n"
-                                          f"📅 *Дата регистрации:* {registration_date}",
+        # Отправка данных на API
+        send_data_to_api({
+            "id": user_id,
+            "name": name,
+            "code": user_code,
+            "wa_number": phone  # API требует wa_number вместо phone
+        })
+
+        # Подтверждение регистрации пользователю
+        bot.send_message(user_id, f"✅ *Регистрация завершена!*\n\n"
+                                  f"📌 *Ваши данные:*\n"
+                                  f"🔹 *Имя:* {name}\n"
+                                  f"📞 *Телефон:* {phone}\n"
+                                  f"🆔 *Уникальный код:* {user_code}\n"
+                                  f"📅 *Дата регистрации:* {registration_date}",
                          parse_mode="Markdown")
 
+        # Отправка адреса склада
         address_message = (
             "📦 *Адрес склада в Китае:*\n"
             "广东省佛山市南海区里水镇环镇南路33号1号仓315库B6961\n"
             "收货人 梅先生-B6961\n"
             "13250150777"
         )
-        bot.send_message(message.chat.id, address_message, parse_mode="Markdown")
+        bot.send_message(user_id, address_message, parse_mode="Markdown")
 
+        # Отправка видео-инструкций
         video_paths = ['instruction.mp4', 'instructions.mp4']
         for path in video_paths:
             try:
                 with open(path, 'rb') as video:
-                    bot.send_video(message.chat.id, video)
+                    bot.send_video(user_id, video)
             except FileNotFoundError:
-                bot.send_message(message.chat.id, f"⚠ Видео {path} временно недоступно.")
+                bot.send_message(user_id, f"⚠ Видео {path} временно недоступно.")
 
-        bot.send_message(message.chat.id, "🎉 Теперь вы можете пользоваться нашим сервисом!")
+        bot.send_message(user_id, "🎉 Теперь вы можете пользоваться нашим сервисом!")
         send_main_menu(message)
-    except sqlite3.Error as e:
-        bot.send_message(message.chat.id, "❌ Произошла ошибка при сохранении данных. Попробуйте позже.")
-        log_event(f"Ошибка при регистрации пользователя: {e}")
+
+    except sqlite3.Error as db_error:
+        bot.send_message(user_id, "❌ Ошибка базы данных. Попробуйте позже.")
+        log_event(f"Ошибка БД при регистрации пользователя {user_id}: {db_error}")
+    except requests.exceptions.RequestException as api_error:
+        bot.send_message(user_id, "⚠ Ошибка соединения с сервером. Данные не отправлены.")
+        log_event(f"Ошибка API при регистрации пользователя {user_id}: {api_error}")
     except Exception as e:
-        log_event(f"Неизвестная ошибка при регистрации пользователя: {e}")
+        log_event(f"Неизвестная ошибка при регистрации пользователя {user_id}: {e}")
+
+def send_admin_notification(user_data):
+    try:
+        admin_message = (
+            f"🚀 Новый пользователь зарегистрирован:\n"
+            f"👤 Имя: {user_data.get('name', 'Не указано')}\n"
+            f"📞 Телефон: {user_data.get('wa_number', 'Не указан')}\n"
+            f"🔑 Код: {user_data.get('code', 'Не указан')}\n"
+            f"📅 Дата регистрации: {user_data.get('registration_date', 'Не указана')}"
+        )
+        admin_bot.send_message(ADMIN_BOT_CHAT_ID, admin_message)
+        log_event("✅ Уведомление администратору отправлено")
+    except Exception as e:
+        log_event(f"❌ Ошибка отправки уведомления админу: {e}")
 
 @bot.message_handler(func=lambda message: message.text == 'Аккаунт')
 def account_info(message):
