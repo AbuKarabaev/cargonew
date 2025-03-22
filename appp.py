@@ -119,7 +119,7 @@ def process_name_step(message):
             bot.send_message(message.chat.id, "Регистрация отменена.", reply_markup=types.ReplyKeyboardRemove())
             return
         user_data[message.chat.id] = {'name': message.text}
-        msg = bot.send_message(message.chat.id, "Введите ваш номер телефона (пример: +996559708005):")
+        msg = bot.send_message(message.chat.id, "Введите ваш ватсап номер (пример: +996559708005):")
         bot.register_next_step_handler(msg, process_phone_step)
     except Exception as e:
         log_event(f"Ошибка на этапе ввода имени: {e}")
@@ -189,8 +189,8 @@ def complete_registration(message):
                             parse_mode="Markdown")
 
             address_message = (
-                "广东省佛山市南海区里水镇环镇南路33号1号仓315库B6961\n"
-                "收货人 梅先生-B6961\n"
+                "广东省佛山市南海区里水镇和顺鹤峰1号仓315库B6961\n"
+                "收货人 梅先生 \n"
                 "13250150777"
             )
             bot.send_message(user_id, address_message, parse_mode="Markdown")
